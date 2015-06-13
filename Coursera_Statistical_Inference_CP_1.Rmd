@@ -1,0 +1,113 @@
+---
+title: 'Statistical Inference: Course Project 1'
+author: "VALAT Didier"
+date: "13/06/2015"
+output: pdf_document
+graphics: yes
+latex_engine: pdflatex
+geometry: margin=0.5in
+fontsize: 10pt
+---
+
+## Overview
+The aim of this project is to investigate the exponential distribution in R and compare it with the Central Limit Theorem. The exponential distribution can be simulated in R with rexp(n, $\lambda$) where $\lambda$ is the rate parameter. The mean of exponential distribution is 1/$\lambda$ and the standard deviation is also 1/$\lambda$. The variable $\lambda$ will be set to **0.2** for all of the simulations. We will investigate the distribution of averages of 40 exponentials. Note that we will produce a thousand simulations.
+
+## Simulations
+
+First, we will load the required libraries and define the figures size:
+
+```{r echo=TRUE, warning=FALSE, message=FALSE}
+# Load libraries
+library(knitr)
+library(ggplot2)
+opts_chunk$set(fig.width=6, fig.height=3.5)
+```
+
+Then, we will define the variables for the study:
+
+```{r echo=TRUE}
+lambda <- 0.2 # Set lambda for the Exponential Distribution
+n <- 40 # Set the number of exponentials
+num_of_simul <- 1000 # Set the number of simulations
+set.seed(3) # Set the seed for analysis reproducibility
+```
+
+After that, we will calculate the Exponential distribution:
+
+```{r echo=TRUE}
+# Calculate the Exponential distribution using a Matrix of n * number of simulations
+exp_distrib <- matrix(data = rexp(n * num_of_simul, lambda), nrow = num_of_simul)
+exp_distrib_mean <- data.frame(means = apply(exp_distrib, 1, mean))
+```
+
+And then, we will plot it:
+
+```{r echo=FALSE, fig.align='center'}
+ggplot(data = exp_distrib_mean, aes(x = means)) + 
+geom_histogram(binwidth = 0.1, aes(fill = ..count..)) + 
+labs(title = "Exponential distribution of averages of 40 exponentials\non a thousand simulations",
+x="Means", y="Count") +
+scale_x_continuous(breaks = round(seq(min(exp_distrib_mean$means), max(exp_distrib_mean$means), by=1)))
+```
+
+## Sample Mean versus Theoretical Mean
+
+We will calculate the expected mean $\mu$ of an exponential distribution of rate $\lambda$ using the following formula $\mu=\frac{1}{\lambda}$ 
+
+```{r echo=TRUE}
+mu <- 1/lambda
+mu
+```
+
+Next, we will get $\bar X$ which is the average sample mean of 1000 simulations of 40 randomly sampled exponential distributions:
+
+```{r}
+x_bar <- mean(exp_distrib_mean$means)
+x_bar
+```
+
+We can see here that the expected mean and the average sample mean values are very close.
+
+## Sample Variance versus Theoretical Variance
+
+We will now calculate the expected standard deviation $\sigma$ of an Exponential distribution of rate $\lambda$ with the following formula $\sigma=\frac{1/\lambda}{\sqrt{n}}$ 
+
+```{r echo=TRUE}
+std_dev <- 1/lambda/sqrt(n)
+std_dev
+```
+
+Next, we will get the variance $Var$ of the standard deviation $\sigma$ which is $Var=\sigma^2$ 
+
+```{r echo=TRUE}
+var <- std_dev^2
+var
+```
+
+After that, we will calculate the standard deviation $\sigma_x$ and the variance $Var_x$ of the average sample mean of 1000 simulations of 40 randomly sampled exponential distribution:
+
+```{r echo=TRUE}
+std_dev_x <- sd(exp_distrib_mean$means)
+std_dev_x
+
+var_x <- var(exp_distrib_mean$means)
+var_x
+```
+
+We can note here that the standard deviations are close too. Indeed, the variance is the square of the standard deviations so the values are quite close.
+
+## Distribution
+
+In this last part, we will compare the population means and standard deviation (**blue dashed lines**) with a normal distribution (**red lines**) of the expected values. Lines will be added in order to display the calculated and expected means:
+
+```{r echo=FALSE, fig.align='center'}
+ggplot(data = exp_distrib_mean, aes(x = means)) +
+  geom_histogram(binwidth = 0.1, aes(y = ..density..), alpha = 0.15) +
+  stat_function(fun = dnorm, arg = list(mean = mu, sd = std_dev), colour = "red", size = 1) +
+  geom_vline(xintercept = mu, size = 1, colour = "red") +
+  geom_density(colour = "blue", size = 1, linetype = "longdash") +
+  geom_vline(xintercept = x_bar, size = 1, colour = "blue", linetype = "longdash") +
+  scale_x_continuous(breaks = seq(mu-3, mu+3, 1), limits = c(mu-3, mu+3)) 
+```
+
+As we can see, the calculated distribution of means of random sampled exponantial distributions quite overlaps with the normal distribution with the expected values based on the given $\lambda$.

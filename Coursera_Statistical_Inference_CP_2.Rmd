@@ -1,0 +1,120 @@
+---
+title: 'Statistical Inference: Course Project 2'
+author: "VALAT Didier"
+date: "13/06/2015"
+output: pdf_document
+graphics: yes
+latex_engine: pdflatex
+geometry: margin=0.5in
+fontsize: 10pt
+---
+
+## Overview
+
+The aim of this project is to use the ToothGrowth data set and perform some basic exploratory data analyses: 
+- Provide a basic summary of the data.
+- Use confidence intervals and/or hypothesis tests to compare tooth growth by supp and dose. (Only use the techniques from class, even if there's other approaches worth considering).
+- State your conclusions and the assumptions needed for your conclusions. 
+
+## Load the data
+
+First, we will load the required libraries and define the figures size:
+
+```{r echo=TRUE, warning=FALSE, message=FALSE}
+# Load libraries
+library(knitr)
+library(ggplot2)
+library(datasets)
+library(gridExtra)
+library(GGally)
+opts_chunk$set(fig.width=6, fig.height=3.5)
+```
+
+Then, we will load the ToothGrowth data:
+
+```{r echo=TRUE}
+data(ToothGrowth)
+```
+
+## Basic summary of the data
+
+We will now do a basic summary of the data:
+
+```{r echo=TRUE}
+str(ToothGrowth)
+summary(ToothGrowth)
+```
+
+As we can see, the data is a set of 60 observations and 3 variables, length of odontoblasts (teeth) in each of 10 guinea pigs at each of three dose levels of Vitamin C (0.5, 1, and 2 mg) with each of two delivery methods (orange juice "OJ" or ascorbic acid "VC").
+
+We will now compare the tooth length for each delivery methods:
+
+```{r echo=FALSE, fig.align='center'}
+ggplot(data = ToothGrowth, aes(x = as.factor(dose), y = len, fill = supp)) +
+    geom_bar(stat = "identity") +
+    scale_fill_manual(values=c("#9ECAE1", "#3282BD")) +
+    facet_grid(. ~ supp) +
+    xlab("Dose (mg)") +
+    ylab("Tooth length") +
+    guides(fill = guide_legend(title = "Delivery methods"))
+```
+
+This graph helps to see that there is a clear positive correlation between the tooth length and the dose levels of Vitamin C, for both delivery methods.
+
+We will now use confidence intervals and/or hypothesis tests to compare tooth growth by dose and delivery methods.
+
+### ***Test A: does the delivery methods have an impact on tooth growth?***
+
+#### Null hypothesis: both delivery methods have the same effect on tooth growth
+* $H_o$: the mean of delivery method OJ **is equal** the mean of delivery method VC.
+
+#### Alternative hypothesis: the delivery methods have not the same effect on tooth growth
+* $H_a$: the mean of delivery method OJ **is not equal** to the mean of delivery method VC.
+
+```{r}
+t.test(data = ToothGrowth, len ~ supp, paired = FALSE, var.equal=FALSE)
+```
+
+Assuming a 95% confidence level the null hypothesis is **not rejected** as the p-value **is more than 0.05%**.
+
+### ***Test B: does the quantity of dose have an impact on tooth growth?***
+
+```{r echo=FALSE}
+# Set variables for each dose
+dose_1 <- subset(ToothGrowth, dose == 0.5)
+dose_2 <- subset(ToothGrowth, dose == 1)
+dose_3 <- subset(ToothGrowth, dose == 2)
+```
+
+#### Null hypothesis 1: dose 0.5mg has the same effect on Tooth Growth as dose 1mg
+* $H_o$: the mean of dose 0.5mg **is equal** to the mean of dose 1mg.
+
+#### Alternative hypothesis 1: dose 0.5mg does not have the same effect on tooth growth as dose 1mg
+* $H_a$: the mean of dose 0.5mg **is not equal** to the mean of dose 1mg.
+
+```{r}
+t.test(dose_1$len, dose_2$len, paired = FALSE, var.equal = FALSE)
+```
+
+Assuming a 95% confidence level the null hypothesis is **rejected** as the p-value is **less than 0.05%**.  
+
+#### Null hypothesis 2: dose 1mg has the same effect on tooth growth as dose 2mg
+* $H_o$: the mean of dose 1mg **is equal** to the mean of dose 2mg.
+
+#### Alternative hypothesis 2: dose 1mg does not have the same effect on tooth growth as dose 2mg
+* $H_a$: the mean of dose 1mg **is not equal** to the mean of dose 2mg.
+
+```{r, echo=TRUE}
+t.test(dose_2$len, dose_3$len, paired = FALSE, var.equal = FALSE)
+```
+
+Assuming a 95% confidence level the null hypothesis is **rejected** as the p-value is **less than 0.05%**.
+
+## Conclusions
+According to the hypothesis tests for delivery method ("supp" variable), there is not enough evidence to reject the null hypothesis therefore we can conlude that **the delivery method did not impact the level of tooth growth significantly**.
+
+The hypothesis tests for dose quantity ("dose" variable) show that there is enough evidence to reject the null hypothesis so we can conclude that **the quantity of dose did impact tooth growth significantly**.
+
+## Assumptions
+- The variances are different for the seperate populations.
+- It seems that there is a bug on the documentation and the original experiment has been made on 60 guinea pigs: https://bugs.r-project.org/bugzilla3/show_bug.cgi?id=15953. Therefore we can assume that the data is independant.
